@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Models\Shop;
 
 class RegisteredUserController extends Controller
 {
@@ -31,12 +32,20 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
+            'shop_name' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // ১. প্রথমে ডাটাবেসে নতুন দোকান তৈরি হবে
+        $shop = Shop::create([
+            'name' => $request->shop_name,
+        ]);
+
+        // ২. এরপর ইউজারের ডাটা তৈরি হবে এবং shop_id দিয়ে তাকে ওই দোকানের সাথে লিংক করা হবে
         $user = User::create([
+            'shop_id' => $shop->id,
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
