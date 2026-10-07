@@ -48,13 +48,14 @@
                             <x-input-error :messages="$errors->get('note')" class="mt-2" />
                         </div>
 
-                        <div class="flex items-center justify-end mt-4">
+                        <div class="flex items-center justify-end mt-6">
                             <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('customers.index') }}">
                                 {{ __('Cancel') }}
                             </a>
 
-                            <x-primary-button class="ms-4">
-                                {{ __('Save Customer') }}
+                            <!-- type="submit" যুক্ত করা হলো যাতে Enter বাটনে কাজ করে -->
+                            <x-primary-button type="submit" class="ms-4 bg-indigo-600 hover:bg-indigo-700">
+                                {{ __('SAVE CUSTOMER') }}
                             </x-primary-button>
                         </div>
                     </form>

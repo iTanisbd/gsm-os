@@ -37,30 +37,36 @@ class DeviceController extends Controller
      */
     public function store(Request $request)
     {
-        // ১. ফর্মের ডাটা ভ্যালিডেশন
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'brand' => 'required|string|max:100',
             'model' => 'required|string|max:100',
             'imei' => 'nullable|string|max:100',
             'problem_description' => 'required|string',
+
+            // নতুন ভ্যালিডেশন
+            'actual_fault' => 'nullable|string',
+            'rack_number' => 'nullable|string|max:50',
+            'drawer_number' => 'nullable|string|max:50',
+            'pre_repair_checklist' => 'nullable|array',
         ]);
 
-        /** @var \App\Models\User $user */
-        $user = auth()->user();
-
-        // ২. ডাটাবেসে ডিভাইস সেভ করা
         Device::create([
-            'shop_id' => $user->shop_id,
+            'shop_id' => auth()->user()->shop_id,
             'customer_id' => $request->customer_id,
             'brand' => $request->brand,
             'model' => $request->model,
             'imei' => $request->imei,
             'problem_description' => $request->problem_description,
-            'status' => 'pending', // ডিফল্ট স্ট্যাটাস
+            'status' => 'pending',
+
+            // নতুন ডাটাগুলো
+            'actual_fault' => $request->actual_fault,
+            'rack_number' => $request->rack_number,
+            'drawer_number' => $request->drawer_number,
+            'pre_repair_checklist' => $request->pre_repair_checklist,
         ]);
 
-        // ৩. সেভ হওয়ার পর লিস্ট পেজে ফিরে যাওয়া
         return redirect()->route('devices.index')->with('success', 'Device received successfully!');
     }
 

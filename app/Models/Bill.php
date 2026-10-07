@@ -8,19 +8,35 @@ class Bill extends Model
 {
     protected $guarded = [];
 
-    // বিলটি কোন দোকানের
+    // অটোমেটিক ইউজার আইডি ট্র্যাকিং
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (auth()->check()) {
+                $model->created_by = auth()->id();
+                $model->updated_by = auth()->id();
+            }
+        });
+
+        static::updating(function ($model) {
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
+            }
+        });
+    }
+
     public function shop()
     {
         return $this->belongsTo(Shop::class);
     }
 
-    // বিলটি কোন কাস্টমারের
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
 
-    // বিলটি কোন ডিভাইসের কাজের জন্য
     public function device()
     {
         return $this->belongsTo(Device::class);
