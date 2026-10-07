@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('customers', CustomerController::class);
     Route::resource('devices', DeviceController::class);
+    Route::post('/devices/{id}/repair-log', [\App\Http\Controllers\DeviceController::class, 'addRepairLog'])->name('devices.repair-log');
     Route::resource('bills', BillController::class);
 });
 

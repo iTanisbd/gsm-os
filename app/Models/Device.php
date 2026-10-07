@@ -40,4 +40,13 @@ class Device extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function repairLogs()
+    {
+        return $this->hasMany(RepairLog::class)->latest(); // সর্বশেষ লগ আগে দেখাবে
+    }
+    public function bills()
+    {
+        return $this->hasMany(Bill::class);
+    }
 }

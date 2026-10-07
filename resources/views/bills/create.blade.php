@@ -9,14 +9,32 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    
+
+                    <!-- Error Messages Display -->
+                    @if(session('error'))
+                        <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-md border border-red-300">
+                            <strong>System Error:</strong> {{ session('error') }}
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-md border border-red-300">
+                            <ul class="list-disc pl-5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    <!-- End Error Messages -->
+
                     <form method="POST" action="{{ route('bills.store') }}">
                         @csrf
 
-                        <!-- Select Device -->
-                        <div>
-                            <x-input-label for="device_id" :value="__('Select Device (ডিভাইস নির্বাচন করুন) *')" />
-                            <select id="device_id" name="device_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 rounded-md" required>
+                        <!-- Select Device (Refined Design) -->
+                        <div class="mb-6 p-5 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
+                            <x-input-label for="device_id" class="text-gray-700 font-bold mb-2" :value="__('Select Device (ডিভাইস নির্বাচন করুন) *')" />
+                            <select id="device_id" name="device_id" class="block w-full border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm transition duration-150 ease-in-out" required>
                                 <option value="" disabled selected>-- ডিভাইস নির্বাচন করুন --</option>
                                 @foreach($devices as $device)
                                     <option value="{{ $device->id }}">
@@ -36,7 +54,7 @@
 
                             <!-- Discount -->
                             <div>
-                                <x-input-label for="discount" :value="__('Discount (ছাড়)')" />
+                                <x-input-label for="discount" :value="__('Discount (ছাড়)')" />
                                 <x-text-input id="discount" class="block mt-1 w-full" type="number" step="0.01" name="discount" value="0" />
                             </div>
 
@@ -50,14 +68,14 @@
                         <!-- Note -->
                         <div class="mt-4">
                             <x-input-label for="note" :value="__('Special Note (Optional)')" />
-                            <textarea id="note" name="note" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 rounded-md" rows="2">{{ old('note') }}</textarea>
+                            <textarea id="note" name="note" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 rounded-md shadow-sm" rows="2">{{ old('note') }}</textarea>
                         </div>
 
-                        <div class="flex items-center justify-end mt-4">
-                            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md" href="{{ route('bills.index') }}">
+                        <div class="flex items-center justify-end mt-6">
+                            <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition ease-in-out duration-150" href="{{ route('bills.index') }}">
                                 {{ __('Cancel') }}
                             </a>
-                            <x-primary-button class="ms-4 bg-green-600 hover:bg-green-700">
+                            <x-primary-button type="submit" class="ms-4 bg-green-600 hover:bg-green-700 transition ease-in-out duration-150 shadow-md">
                                 {{ __('Create Bill & Save') }}
                             </x-primary-button>
                         </div>
