@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Device extends Model
 {
@@ -10,9 +11,10 @@ class Device extends Model
 
     protected $casts = [
         'pre_repair_checklist' => 'array',
+        'terms' => 'array',
+        'reported_issues' => 'array',
     ];
 
-    // অটোমেটিক ইউজার আইডি ট্র্যাকিং
     protected static function boot()
     {
         parent::boot();
@@ -21,6 +23,10 @@ class Device extends Model
             if (auth()->check()) {
                 $model->created_by = auth()->id();
                 $model->updated_by = auth()->id();
+            }
+
+            if (empty($model->tracking_code)) {
+                $model->tracking_code = 'DEV-' . strtoupper(Str::random(7));
             }
         });
 
@@ -43,10 +49,21 @@ class Device extends Model
 
     public function repairLogs()
     {
-        return $this->hasMany(RepairLog::class)->latest(); // সর্বশেষ লগ আগে দেখাবে
+        return $this->hasMany(RepairLog::class)->latest();
     }
+
     public function bills()
     {
         return $this->hasMany(Bill::class);
+    }
+
+    public function deliveredBy()
+    {
+        return $this->belongsTo(User::class, 'delivered_by');
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'tracking_code';
     }
 }

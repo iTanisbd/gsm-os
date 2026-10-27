@@ -12,7 +12,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        // বর্তমান ইউজারের দোকানের (shop) সব কাস্টমারদের ডাটাবেস থেকে নিয়ে আসা
+        // বর্তমান ইউজারের দোকানের (shop) সব কাস্টমারদের ডাটাবেস থেকে নিয়ে আসা
         $customers = Customer::where('shop_id', auth()->user()->shop_id)->latest()->get();
 
         // ডাটাগুলো index ভিউ পেজে পাঠানো
@@ -32,11 +32,11 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-        // ১. ফর্মের ডাটা ভ্যালিডেশন
+        // ১. ফর্মের ডাটা ভ্যালিডেশন (Updated numeric validation for phone)
         $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'phone_secondary' => 'nullable|string|max:20',
+            'phone' => 'required|numeric|digits_between:1,20',
+            'phone_secondary' => 'nullable|numeric|digits_between:1,20',
             'address' => 'nullable|string',
             'note' => 'nullable|string',
         ]);
@@ -51,7 +51,7 @@ class CustomerController extends Controller
             'note' => $request->note,
         ]);
 
-        // ৩. সেভ হওয়ার পর কাস্টমার লিস্ট পেজে ফিরে যাওয়া
+        // ৩. সেভ হওয়ার পর কাস্টমার লিস্ট পেজে ফিরে যাওয়া
         return redirect()->route('customers.index')->with('success', 'Customer added successfully!');
     }
 
@@ -89,10 +89,11 @@ class CustomerController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        // Updated numeric validation for phone
         $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'phone_secondary' => 'nullable|string|max:20',
+            'phone' => 'required|numeric|digits_between:1,20',
+            'phone_secondary' => 'nullable|numeric|digits_between:1,20',
             'address' => 'nullable|string',
             'note' => 'nullable|string',
         ]);

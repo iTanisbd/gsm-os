@@ -13,17 +13,19 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('shop_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('bill_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('shop_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('bill_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('customer_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
 
-            // লজিকের মেইন অংশ
-            $table->enum('type', ['payment', 'refund', 'discount']);
-            $table->decimal('amount', 10, 2);
-            $table->text('note')->nullable();
+            $table->string('type', 50)->default('income');
+            $table->decimal('amount', 10, 2)->default(0);
+            $table->string('method')->default('cash');
+            $table->text('description')->nullable();
 
-            // অডিট ট্রেইল (কে ট্রানজেকশনটি করেছে)
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
+
             $table->timestamps();
         });
     }

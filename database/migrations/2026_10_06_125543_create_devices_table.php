@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('devices', function (Blueprint $table) {
             $table->id();
+            $table->string('tracking_code')->unique()->nullable(); // URL স্ল্যাগের জন্য
             $table->foreignId('shop_id')->constrained('shops')->cascadeOnDelete(); // এটি কোন দোকানের কাজ
             $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete(); // এটি কোন কাস্টমারের ডিভাইস
 
             $table->string('brand'); // ব্র্যান্ড (যেমন: Samsung, Apple, Xiaomi)
             $table->string('model'); // মডেল (যেমন: iPhone 14, Galaxy S23)
-            $table->string('imei')->nullable(); // ডিভাইসের IMEI বা সিরিয়াল নম্বর (থাকলে)
+            $table->string('imei')->nullable(); // ডিভাইসের IMEI বা সিরিয়াল নম্বর (থাকলে)
             $table->text('problem_description'); // ডিভাইসে কী সমস্যা বা কাস্টমার কী সার্ভিস চাচ্ছেন
             $table->enum('status', ['pending', 'processing', 'completed', 'delivered'])->default('pending'); // কাজের বর্তমান অবস্থা
 

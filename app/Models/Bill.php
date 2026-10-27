@@ -41,4 +41,10 @@ class Bill extends Model
     {
         return $this->belongsTo(Device::class);
     }
+
+    // একটি বিলের অধীনে থাকা একাধিক আইটেম
+    public function items()
+    {
+        return $this->hasMany(BillItem::class);
+    }
 }

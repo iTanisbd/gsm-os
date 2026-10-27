@@ -13,22 +13,19 @@ return new class extends Migration
     {
         Schema::create('bills', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('shop_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('device_id')->constrained()->cascadeOnDelete();
+            $table->string('invoice_number')->unique();
+            $table->decimal('total_amount', 10, 2);
+            $table->decimal('discount', 10, 2)->default(0);
+            $table->decimal('paid_amount', 10, 2)->default(0);
+            $table->decimal('due_amount', 10, 2)->default(0);
+            $table->enum('payment_status', ['paid', 'due', 'partial']);
+            $table->text('note')->nullable();
 
-            // রিলেশনশিপ (কোন দোকান, কোন কাস্টমার এবং কোন ডিভাইসের বিল)
-            $table->foreignId('shop_id')->constrained('shops')->cascadeOnDelete();
-            $table->foreignId('customer_id')->constrained('customers')->cascadeOnDelete();
-            $table->foreignId('device_id')->constrained('devices')->cascadeOnDelete();
-
-            // বিলিংয়ের হিসাব-নিকাশ
-            $table->decimal('total_amount', 10, 2); // মোট বিল
-            $table->decimal('discount', 10, 2)->default(0); // ডিসকাউন্ট
-            $table->decimal('paid_amount', 10, 2)->default(0); // কাস্টমার কত টাকা দিল
-            $table->decimal('due_amount', 10, 2)->default(0); // বকেয়া কত থাকল
-
-            // পেমেন্ট স্ট্যাটাস
-            $table->enum('payment_status', ['paid', 'due', 'partial'])->default('due');
-
-            $table->text('note')->nullable(); // কোনো নোট থাকলে
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
 
             $table->timestamps();
         });
