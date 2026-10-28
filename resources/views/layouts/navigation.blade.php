@@ -10,7 +10,7 @@
                     </a>
                 </div>
 
-                <!-- Navigation Links (Fixed Double Inventory Issue) -->
+                <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
@@ -30,26 +30,35 @@
                 </div>
             </div>
 
-            <!-- SMART SCANNER INPUT (Fixed Visibility for Medium Screens) -->
-            <div class="hidden md:flex items-center flex-1 justify-center px-4 lg:px-6">
-                <form id="globalScannerForm" class="w-full max-w-[320px] relative" onsubmit="return handleGlobalScan(event)">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+            <!-- SMART LIVE GLOBAL SEARCH & SCANNER -->
+            <div class="hidden md:flex items-center flex-1 justify-center px-4 lg:px-6 relative">
+                <div class="w-full max-w-[340px] relative" x-data="{ open: false, query: '' }">
+                    <form id="globalScannerForm" class="relative" onsubmit="return handleGlobalScan(event)">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="globalScannerInput" x-model="query"
+                            @input.debounce.300ms="fetchLiveResults(query)"
+                            @focus="if(query.length >= 1) open = true"
+                            class="block w-full pl-10 pr-14 py-1.5 border border-gray-300 rounded-lg leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:text-xs font-semibold shadow-sm"
+                            placeholder="Search name, phone, tracking ID..."
+                            autocomplete="off">
+                        <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center pointer-events-none">
+                            <span class="bg-gray-200 text-gray-500 rounded px-1.5 py-0.5 text-[9px] font-bold border border-gray-300">Ctrl+Q</span>
+                        </div>
+                    </form>
+
+                    <!-- Live Results Dropdown Box -->
+                    <div id="liveSearchResults" class="absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto z-50 hidden">
+                        <!-- Dynamic Results injected via JS -->
                     </div>
-                    <input type="text" id="globalScannerInput"
-                        class="block w-full pl-10 pr-14 py-1.5 border border-gray-300 rounded-lg leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:text-xs font-semibold shadow-sm"
-                        placeholder="Scan QR or Tracking ID"
-                        autocomplete="off">
-                    <div class="absolute inset-y-0 right-0 pr-1.5 flex items-center pointer-events-none">
-                        <span class="bg-gray-200 text-gray-500 rounded px-1.5 py-0.5 text-[9px] font-bold border border-gray-300">Ctrl+Q</span>
-                    </div>
-                </form>
+                </div>
             </div>
 
             <!-- Notifications & Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-2">
 
-                <!-- 0. Delivery Reminder Dropdown (Width: 270px) -->
+                <!-- 0. Delivery Reminder Dropdown -->
                 @php
                     $upcomingDeliveryLimit = \Carbon\Carbon::today()->addDays(7)->toDateString();
                     $deliveryNotifications = \App\Models\Device::with('customer')
@@ -111,7 +120,7 @@
                     </x-slot>
                 </x-dropdown>
 
-                <!-- 1. Notifications Dropdown (বকেয়া রিমাইন্ডার - Width: 220px) -->
+                <!-- 1. Due Notifications Dropdown -->
                 @php
                     $upcomingLimit = \Carbon\Carbon::today()->addDays(7)->toDateString();
                     $dueNotifications = \App\Models\Bill::with('customer')
@@ -169,7 +178,7 @@
                     </x-slot>
                 </x-dropdown>
 
-                <!-- 2. Settings Dropdown (আপনার প্রোফাইল) -->
+                <!-- 2. Settings Dropdown -->
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
@@ -213,7 +222,6 @@
             <x-responsive-nav-link :href="route('expenses.index')" :active="request()->routeIs('expenses.*')">
                 {{ __('Expenses') }}
             </x-responsive-nav-link>
-            <!-- Missing Inventory Link in Mobile Menu has been Fixed Here -->
             <x-responsive-nav-link :href="route('inventory.index')" :active="request()->routeIs('inventory.*')">
                 {{ __('Inventory') }}
             </x-responsive-nav-link>
@@ -257,16 +265,99 @@
                 let trackingCode = match[0].toUpperCase();
                 window.location.href = '/devices/' + trackingCode;
             } else {
-                alert('এই স্ক্যানারটি শুধুমাত্র QR Code স্ক্যান করার জন্য।');
-                input.value = '';
-                input.focus();
+                // যদি হুবহু DEV- কোড না হয়ে সাধারণ নাম বা নাম্বার হয়, তবে লাইভ সার্চ রেজাল্টের প্রথমটিতে রিডাইরেক্ট করার চেষ্টা করবে বা ফোকাস রাখবে
+                let firstResult = document.querySelector('#liveSearchResults a');
+                if (firstResult) {
+                    window.location.href = firstResult.href;
+                } else {
+                    alert('সংশ্লিষ্ট কোনো কাস্টমার বা ডিভাইস পাওয়া যায়নি!');
+                }
             }
         }
     }
+
+    // Live Search Ajax Request Function
+    let searchTimeout;
+    function fetchLiveResults(query) {
+        let resultsBox = document.getElementById('liveSearchResults');
+
+        if (query.trim().length < 1) {
+            resultsBox.classList.add('hidden');
+            resultsBox.innerHTML = '';
+            return;
+        }
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            fetch(`/global-search?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    let html = '';
+                    let hasResults = false;
+
+                    // Customers Section
+                    if (data.customers && data.customers.length > 0) {
+                        hasResults = true;
+                        html += `<div class="px-3 py-1.5 bg-gray-100 text-[10px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-200">Customers</div>`;
+                        data.customers.forEach(cust => {
+                            html += `
+                                <a href="/customers/${cust.id}" class="block px-4 py-2 hover:bg-indigo-50 border-b border-gray-100 transition">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs font-bold text-gray-800">${cust.name}</span>
+                                        <span class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-bold">${cust.phone}</span>
+                                    </div>
+                                </a>
+                            `;
+                        });
+                    }
+
+                    // Devices Section
+                    if (data.devices && data.devices.length > 0) {
+                        hasResults = true;
+                        html += `<div class="px-3 py-1.5 bg-gray-100 text-[10px] font-bold uppercase tracking-wider text-gray-500 border-b border-gray-200">Devices & Repairs</div>`;
+                        data.devices.forEach(dev => {
+                            let customerName = dev.customer ? dev.customer.name : 'Unknown';
+                            html += `
+                                <a href="/devices/${dev.tracking_code}" class="block px-4 py-2 hover:bg-indigo-50 border-b border-gray-100 transition">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="text-xs font-bold text-indigo-600 block">${dev.tracking_code} - ${dev.brand} ${dev.model}</span>
+                                            <span class="text-[10px] text-gray-500">Customer: ${customerName}</span>
+                                        </div>
+                                        <span class="text-[9px] uppercase px-2 py-0.5 rounded font-bold ${dev.status === 'delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${dev.status}</span>
+                                    </div>
+                                </a>
+                            `;
+                        });
+                    }
+
+                    if (!hasResults) {
+                        html = `<div class="px-4 py-6 text-xs text-gray-400 text-center font-medium">No results found!</div>`;
+                    }
+
+                    resultsBox.innerHTML = html;
+                    resultsBox.classList.remove('hidden');
+                })
+                .catch(err => console.error('Search error:', err));
+        }, 250);
+    }
+
+    // Hide search dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        let searchContainer = document.getElementById('globalScannerInput');
+        let resultsBox = document.getElementById('liveSearchResults');
+        if (searchContainer && resultsBox && !searchContainer.contains(e.target) && !resultsBox.contains(e.target)) {
+            resultsBox.classList.add('hidden');
+        }
+    });
+
+    // Ctrl+Q Shortcut to focus search box
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && (e.key === 'q' || e.key === 'Q')) {
             e.preventDefault();
-            document.getElementById('globalScannerInput').focus();
+            let input = document.getElementById('globalScannerInput');
+            input.focus();
+            input.select();
         }
     });
 </script>

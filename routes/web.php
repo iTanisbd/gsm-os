@@ -6,6 +6,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\GlobalSearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,6 +44,9 @@ Route::middleware('auth')->group(function () {
 
     // Inventory Management
     Route::resource('inventory', InventoryController::class);
+
+    // Global Search
+    Route::get('/global-search', [GlobalSearchController::class, 'search'])->name('global.search');
 });
 
 // Public Device Tracking Route (No Auth Required)

@@ -60,7 +60,8 @@ class CustomerController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $customer = Customer::with('devices.bills')->where('shop_id', auth()->user()->shop_id)->findOrFail($id);
+        return view('customers.show', compact('customer'));
     }
 
     /**
