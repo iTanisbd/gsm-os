@@ -10,11 +10,9 @@
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            <!-- Welcome Banner -->
             <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-4 border border-gray-100">
-                <div class="p-4 text-gray-900 font-semibold text-sm sm:text-base flex items-center gap-3">
-                    <span class="text-xl">👋</span>
-                    <span>স্বাগতম, <span class="font-bold text-indigo-700">{{ auth()->user()->name }}</span>! আপনার দোকানের (<span class="font-bold">{{ auth()->user()->shop->name ?? 'Anis Telecom' }}</span>) সার্বিক অবস্থার রিপোর্ট নিচে দেওয়া হলো:</span>
+                <div class="p-3 text-gray-800 font-medium text-sm">
+                    স্বাগতম, <span class="font-bold text-indigo-700">{{ auth()->user()->name }}</span>! আপনার দোকানের (<span class="font-bold">{{ auth()->user()->shop->name ?? 'Anis Telecom' }}</span>) সার্বিক অবস্থার রিপোর্ট নিচে দেওয়া হলো:
                 </div>
             </div>
 
@@ -75,9 +73,7 @@
                             <h3 class="text-xl font-black text-indigo-600 tracking-tight">{{ number_format($totalDevices) }}</h3>
                             <span class="text-[10px] text-gray-400 font-medium mt-1 block">মোট ডিভাইস</span>
                         </div>
-                        <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        </div>
+                        <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></div>
                     </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-sm border-l-4 border-emerald-500 p-4">
@@ -87,9 +83,7 @@
                             <h3 class="text-xl font-black text-emerald-600 tracking-tight">{{ number_format($completedDevices) }}</h3>
                             <span class="text-[10px] text-gray-400 font-medium mt-1 block">মেরামত সম্পন্ন</span>
                         </div>
-                        <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </div>
+                        <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
                     </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-sm border-l-4 border-blue-500 p-4">
@@ -99,9 +93,7 @@
                             <h3 class="text-xl font-black text-blue-600 tracking-tight">{{ number_format($deliveredDevices) }}</h3>
                             <span class="text-[10px] text-gray-400 font-medium mt-1 block">ডেলিভারি সম্পন্ন</span>
                         </div>
-                        <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                        </div>
+                        <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg></div>
                     </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-sm border-l-4 border-yellow-500 p-4">
@@ -111,9 +103,7 @@
                             <h3 class="text-xl font-black text-yellow-600 tracking-tight">{{ number_format($partialDevices) }}</h3>
                             <span class="text-[10px] text-gray-400 font-medium mt-1 block">আংশিক মেরামত</span>
                         </div>
-                        <div class="p-2.5 bg-yellow-50 text-yellow-600 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                        </div>
+                        <div class="p-2.5 bg-yellow-50 text-yellow-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></div>
                     </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-sm border-l-4 border-rose-500 p-4">
@@ -123,14 +113,12 @@
                             <h3 class="text-xl font-black text-rose-600 tracking-tight">{{ number_format($returnedDevices) }}</h3>
                             <span class="text-[10px] text-gray-400 font-medium mt-1 block">কাজ ছাড়া ফেরত</span>
                         </div>
-                        <div class="p-2.5 bg-rose-50 text-rose-600 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                        </div>
+                        <div class="p-2.5 bg-rose-50 text-rose-600 rounded-lg"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg></div>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. Current Month Financials (No Hover Effects) -->
+            <!-- 3. Current Month Financials (Fixed Net Profit Icon & Alignment) -->
             <div class="flex justify-between items-end mb-3 pl-1">
                 <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Current Month Financials ({{ date('F Y') }})</h3>
             </div>
@@ -151,8 +139,16 @@
                     </div>
                 </div>
                 <div class="bg-white rounded-lg shadow-sm border {{ $netProfit >= 0 ? 'border-indigo-100' : 'border-red-100' }} p-4 flex items-center gap-4 relative overflow-hidden">
-                    <div class="absolute -right-2 -bottom-2 opacity-10 text-6xl">💰</div>
-                    <div class="w-10 h-10 {{ $netProfit >= 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-red-100 text-red-600' }} rounded-full flex items-center justify-center relative z-10"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+
+                    <!-- Fixed perfectly centered Watermark -->
+                    <div class="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-100 opacity-60">
+                        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+
+                    <div class="w-10 h-10 flex-shrink-0 {{ $netProfit >= 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-red-100 text-red-600' }} rounded-full flex items-center justify-center relative z-10">
+                        <!-- Thinner, standard Dollar Icon -->
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
                     <div class="relative z-10">
                         <p class="text-[10px] font-bold text-gray-500 uppercase">Net Profit</p>
                         <h3 class="text-xl font-black {{ $netProfit >= 0 ? 'text-indigo-600' : 'text-red-600' }}">৳{{ number_format($netProfit, 2) }}</h3>
@@ -166,8 +162,6 @@
                 <div class="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-100 p-4">
                     <div class="flex justify-between items-center mb-3 border-b pb-2">
                         <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider">Income vs Expense</h3>
-
-                        <!-- NO TRANSITION/RING OUTLINE ON THIS SELECT -->
                         <form method="GET" action="{{ route('dashboard') }}" class="flex items-center gap-2 m-0 p-0">
                             <select name="chart_filter" onchange="this.form.submit()" class="text-[10px] font-bold border-gray-200 text-gray-700 bg-gray-50 rounded py-1 pl-2 pr-6 outline-none cursor-pointer">
                                 <option value="7days" {{ $chartData['current_filter'] == '7days' ? 'selected' : '' }}>Last 7 Days</option>
@@ -181,7 +175,7 @@
                     </div>
                 </div>
 
-                <!-- Doughnut Chart -->
+                <!-- Doughnut Chart (Fixed Tooltips on Hover) -->
                 <div class="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-100 p-4">
                     <h3 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-3 border-b pb-2">Repair Status</h3>
                     <div class="relative h-56 flex justify-center items-center">
@@ -244,8 +238,11 @@
                     datasets: [{
                         data: Object.values(statusData),
                         backgroundColor: ['#FCD34D', '#60A5FA', '#34D399', '#9CA3AF', '#FB7185'],
-                        borderWidth: 2,
-                        hoverOffset: 4
+                        // Keep colors exact same on hover so it doesn't darken
+                        hoverBackgroundColor: ['#FCD34D', '#60A5FA', '#34D399', '#9CA3AF', '#FB7185'],
+                        borderWidth: 0,
+                        hoverBorderWidth: 0,
+                        hoverOffset: 0 // Tooltips remain active, but shape doesn't expand
                     }]
                 },
                 options: {
@@ -253,7 +250,8 @@
                     maintainAspectRatio: false,
                     cutout: '65%',
                     plugins: {
-                        legend: { position: 'right', labels: { boxWidth: 10, padding: 12, font: { size: 10, weight: 'bold' } } }
+                        legend: { position: 'right', labels: { boxWidth: 10, padding: 12, font: { size: 10, weight: 'bold' } } },
+                        tooltip: { enabled: true } // Ensuring tooltips are ON
                     }
                 }
             });

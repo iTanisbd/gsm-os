@@ -5,10 +5,8 @@
         </h2>
     </x-slot>
 
-    <!-- Datalists for Suggestions -->
-    <datalist id="hardwareSuggestions"><option value="Display Change"><option value="Battery Replacement"><option value="Charging Port Repair"><option value="Speaker/Mic Repair"></datalist>
-    <datalist id="warrantySuggestions"><option value="None"><option value="7 Days"><option value="15 Days"><option value="1 Month"><option value="3 Months"></datalist>
-    <datalist id="softwareSuggestions"><option value="FRP Bypass"><option value="Flashing"><option value="Country Unlock"><option value="Dead Boot Repair"></datalist>
+    <!-- Datalists for Smart Suggestions (Auto-Complete) -->
+    @include('partials.suggestions')
 
     <script>
         const rawDevices = @json($devices);
@@ -16,11 +14,80 @@
 
         rawDevices.forEach(function(device) {
             deviceData[device.id] = {
+                brand: device.brand ? device.brand.toLowerCase() : '',
+                model: device.model ? device.model.toLowerCase() : '',
                 complaint: device.problem_description,
                 additional: device.additional_complaint ? device.additional_complaint : '',
                 fault: device.actual_fault ? device.actual_fault : ''
             };
         });
+
+        // Inventory Data Setup for Smart Dropdown
+        const rawInventories = @json($inventories ?? []);
+        window.currentInventoryOptions = '<option value="">Select Device First</option>';
+
+        function updateInventoryDropdowns(selectedDeviceId) {
+            let selectedDevice = deviceData[selectedDeviceId];
+            let optionsHTML = '<option value="">None</option>';
+
+            if (selectedDevice) {
+                let cleanDeviceModel = selectedDevice.model.replace(/original|copy|tft|oled|incell/gi, '').trim();
+
+                let filteredParts = rawInventories.filter(inv => {
+                    // Show Universal parts
+                    if (inv.brand && inv.brand.toLowerCase() === 'universal') return true;
+                    if (inv.model && (inv.model.toLowerCase() === 'all' || inv.model.toLowerCase() === 'universal')) return true;
+
+                    // Match Exact Brand and Model
+                    let invBrandMatches = inv.brand ? (inv.brand.toLowerCase() === selectedDevice.brand) : true;
+                    let invModelMatches = inv.model ? (cleanDeviceModel.includes(inv.model.toLowerCase()) || inv.model.toLowerCase().includes(cleanDeviceModel)) : true;
+
+                    return invBrandMatches && invModelMatches;
+                });
+
+                if(filteredParts.length === 0) {
+                    optionsHTML += `<option value="" disabled>No exact parts in stock</option>`;
+                } else {
+                    filteredParts.forEach(inv => {
+                        optionsHTML += `<option value="${inv.id}" data-price="${inv.selling_price}">${inv.name} (Stock: ${inv.stock})</option>`;
+                    });
+                }
+            } else {
+                optionsHTML = '<option value="">Select Device First</option>';
+            }
+
+            document.querySelectorAll('.hw-part').forEach(select => {
+                let currentValue = select.value;
+                select.innerHTML = optionsHTML;
+                if (select.querySelector(`option[value="${currentValue}"]`)) {
+                    select.value = currentValue;
+                }
+            });
+
+            window.currentInventoryOptions = optionsHTML;
+        }
+
+        function applyPartPrice(selectElement) {
+            let selectedOption = selectElement.options[selectElement.selectedIndex];
+            let price = selectedOption.getAttribute('data-price');
+
+            if (price) {
+                let row = selectElement.closest('.hw-row');
+                let amountInput = row.querySelector('.hw-amount');
+                let descInput = row.querySelector('.hw-desc');
+
+                amountInput.value = parseFloat(price).toFixed(2);
+
+                // Only fill if empty
+                if (descInput.value.trim() === '') {
+                    let partName = selectedOption.text.split(' (Stock')[0];
+                    descInput.value = partName;
+                }
+
+                calculateTotal();
+                syncRowRequirement(amountInput);
+            }
+        }
     </script>
 
     <div class="py-12">
@@ -42,8 +109,8 @@
                         <!-- Select Device -->
                         <div class="mb-6 p-5 bg-gray-50 border border-gray-200 rounded-lg shadow-sm">
                             <x-input-label for="device_id" class="text-gray-700 font-bold mb-2" :value="__('Select Device *')" />
-                            <select id="device_id" name="device_id" class="block w-full border-gray-300 focus:border-indigo-500 rounded-md shadow-sm text-sm font-semibold text-gray-900 transition-none" required onchange="showDeviceDetails(this.value)">
-                                <option value="" disabled selected>-- Select a Device --</option>
+                            <select id="device_id" name="device_id" class="block w-full border-gray-300 focus:border-indigo-500 rounded-md shadow-sm text-sm font-semibold text-gray-900" required onchange="showDeviceDetails(this.value)">
+                                <option value="" disabled selected>Select Device</option>
                                 @foreach($devices as $d)
                                     @php
                                         $cleanModel = trim(preg_replace('/^' . preg_quote($d->brand, '/') . '\s+/i', '', $d->model));
@@ -55,7 +122,7 @@
                             </select>
                         </div>
 
-                        <!-- Smart Info Box for Selected Device (Hidden by Default) -->
+                        <!-- Smart Info Box for Selected Device -->
                         <div id="smartInfoBox" class="hidden mb-6 bg-blue-50/50 border border-blue-200 rounded-lg p-5 shadow-sm">
                             <h3 class="text-xs font-bold text-blue-800 uppercase tracking-widest mb-4 border-b border-blue-200 pb-2">Auto-Detected Issues (Must Handle All)</h3>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -83,10 +150,11 @@
                             </div>
                         </div>
 
-                        <!-- 2-Column Layout for Hardware & Software (Uniform Height items-stretch) -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
-                            <!-- Hardware Section -->
-                            <div class="border border-blue-300 rounded-lg shadow-sm bg-white flex flex-col h-full overflow-hidden">
+                        <!-- 2-Column Layout (Adjusted Widths: HW 68% / SW 32%) -->
+                        <div class="flex flex-col xl:flex-row gap-6 mb-6 items-stretch">
+
+                            <!-- Hardware Section (Increased outer width to 68%) -->
+                            <div class="w-full xl:w-[68%] border border-blue-300 rounded-lg shadow-sm bg-white flex flex-col h-full overflow-hidden">
                                 <div class="bg-blue-50 px-4 py-3 border-b border-blue-200 flex justify-between items-center">
                                     <h3 class="text-blue-800 font-bold text-sm uppercase">Hardware Repairs</h3>
                                     <button type="button" id="addHardwareBtn" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 shadow-sm font-bold flex items-center gap-1 cursor-pointer">
@@ -94,30 +162,45 @@
                                     </button>
                                 </div>
                                 <div class="p-4 bg-gray-50 flex-grow rounded-b-lg" id="hardwareContainer">
-                                    <div class="p-3 mb-3 bg-white border border-gray-200 rounded-md shadow-sm item-row hw-row flex gap-2 items-end">
-                                        <div style="flex: 55%;">
+                                    <div class="p-3 mb-3 bg-white border border-gray-200 rounded-md shadow-sm item-row hw-row flex flex-wrap lg:flex-nowrap gap-2 items-end">
+
+                                        <!-- Service Name gets 34% -->
+                                        <div class="w-full lg:w-auto" style="flex: 1 1 34%;">
                                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Service Name *</label>
                                             <input type="text" name="hardware_items[0][description]" list="hardwareSuggestions" class="hw-desc block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-blue-500 placeholder-gray-400" placeholder="Ex: Display Change" oninput="syncRowRequirement(this)">
                                             <input type="hidden" class="linked-id" value="">
                                         </div>
-                                        <div style="flex: 20%;">
+
+                                        <!-- Select Part gets 33%, added pr-8 and truncate to fix arrow overlap -->
+                                        <div class="w-full lg:w-auto" style="flex: 1 1 33%;">
+                                            <label class="block text-[10px] font-bold text-indigo-500 uppercase mb-1">Select Part</label>
+                                            <select name="hardware_items[0][inventory_id]" class="hw-part block w-full py-2 pl-3 pr-8 border-indigo-200 bg-indigo-50 rounded shadow-sm text-sm focus:border-indigo-500 text-indigo-700 font-semibold truncate" onchange="applyPartPrice(this)">
+                                                <option value="">Select Device First</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Warranty gets 15% -->
+                                        <div class="w-full lg:w-auto" style="flex: 1 1 15%;">
                                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Warranty *</label>
                                             <input type="text" name="hardware_items[0][warranty]" list="warrantySuggestions" class="hw-warranty block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-blue-500 placeholder-gray-400" placeholder="Ex: None" oninput="syncRowRequirement(this)">
                                         </div>
-                                        <div style="flex: 25%;">
+
+                                        <!-- Amount gets 18% -->
+                                        <div class="w-full lg:w-auto" style="flex: 1 1 18%;">
                                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount *</label>
                                             <div class="flex shadow-sm rounded-md">
-                                                <span class="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-100 text-gray-500 font-bold text-sm">৳</span>
-                                                <input type="number" name="hardware_items[0][amount]" step="0.01" min="0" class="hw-amount item-amount flex-1 block w-full px-3 py-2 rounded-none rounded-r-md text-sm border-gray-300 focus:border-blue-500 font-semibold" oninput="calculateTotal(); syncRowRequirement(this);">
+                                                <span class="inline-flex items-center px-2 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-100 text-gray-500 font-bold text-sm">৳</span>
+                                                <input type="number" name="hardware_items[0][amount]" step="0.01" min="0" class="hw-amount item-amount flex-1 block w-full px-2 py-2 rounded-none rounded-r-md text-sm border-gray-300 focus:border-blue-500 font-semibold" oninput="calculateTotal(); syncRowRequirement(this);">
                                             </div>
                                         </div>
-                                        <div style="flex: 0 0 32px;"></div>
+
+                                        <div class="w-full lg:w-auto flex justify-center lg:justify-end" style="flex: 0 0 32px; padding-bottom: 4px;"></div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Software Section -->
-                            <div class="border border-green-300 rounded-lg shadow-sm bg-white flex flex-col h-full overflow-hidden">
+                            <!-- Software Section (Decreased outer width to 32%) -->
+                            <div class="w-full xl:w-[32%] border border-green-300 rounded-lg shadow-sm bg-white flex flex-col h-full overflow-hidden">
                                 <div class="bg-green-50 px-4 py-3 border-b border-green-200 flex justify-between items-center">
                                     <h3 class="text-green-800 font-bold text-sm uppercase">Software Services</h3>
                                     <button type="button" id="addSoftwareBtn" class="text-xs bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 shadow-sm font-bold flex items-center gap-1 cursor-pointer">
@@ -126,16 +209,16 @@
                                 </div>
                                 <div class="p-4 bg-gray-50 flex-grow rounded-b-lg" id="softwareContainer">
                                     <div class="p-3 mb-3 bg-white border border-gray-200 rounded-md shadow-sm item-row sw-row flex gap-2 items-end">
-                                        <div style="flex: 75%;">
+                                        <div style="flex: 1 1 65%;">
                                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Service Name *</label>
-                                            <input type="text" name="software_items[0][description]" list="softwareSuggestions" class="sw-desc block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-green-500 placeholder-gray-400" placeholder="Ex: FRP Bypass" oninput="syncRowRequirement(this)">
+                                            <input type="text" name="software_items[0][description]" list="softwareSuggestions" class="sw-desc block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-green-500 placeholder-gray-400" placeholder="Ex: FRP Unlock" oninput="syncRowRequirement(this)">
                                             <input type="hidden" class="linked-id" value="">
                                         </div>
-                                        <div style="flex: 25%;">
+                                        <div style="flex: 1 1 35%;">
                                             <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount *</label>
                                             <div class="flex shadow-sm rounded-md">
-                                                <span class="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-100 text-gray-500 font-bold text-sm">৳</span>
-                                                <input type="number" name="software_items[0][amount]" step="0.01" min="0" class="sw-amount item-amount flex-1 block w-full px-3 py-2 rounded-none rounded-r-md text-sm border-gray-300 focus:border-green-500 font-semibold" oninput="calculateTotal(); syncRowRequirement(this);">
+                                                <span class="inline-flex items-center px-2 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-100 text-gray-500 font-bold text-sm">৳</span>
+                                                <input type="number" name="software_items[0][amount]" step="0.01" min="0" class="sw-amount item-amount flex-1 block w-full px-2 py-2 rounded-none rounded-r-md text-sm border-gray-300 focus:border-green-500 font-semibold" oninput="calculateTotal(); syncRowRequirement(this);">
                                             </div>
                                         </div>
                                         <div style="flex: 0 0 32px;"></div>
@@ -195,7 +278,7 @@
                         <!-- Action Buttons -->
                         <div class="flex items-center justify-end mt-4 mb-2 gap-4">
                             <a class="underline text-sm text-gray-600 hover:text-gray-900 transition" href="{{ route('bills.index') }}">Cancel</a>
-                            <x-primary-button type="submit" class="bg-indigo-600 hover:bg-indigo-700 shadow-md px-6 py-2.5 text-sm font-bold tracking-wider rounded-md">Create Bill & Save</x-primary-button>
+                            <x-primary-button type="submit" class="bg-indigo-600 hover:bg-indigo-700 shadow-md px-6 py-2.5 text-sm font-bold tracking-wider rounded-md">Create Bill & Deduct Stock</x-primary-button>
                         </div>
                     </form>
                 </div>
@@ -224,10 +307,34 @@
         </div>
     </div>
 
-    <!-- Script for Full Automagic Validation! -->
+    <!-- Script for Full Automagic Validation & Inventory Sync -->
     <script>
         let issueStatuses = {};
         let deviceIssues = { cmp: [], add: [], flt: [] };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            let initialDevice = document.getElementById('device_id').value;
+            if(initialDevice) {
+                updateInventoryDropdowns(initialDevice);
+            }
+        });
+
+        function showDeviceDetails(deviceId) {
+            updateInventoryDropdowns(deviceId);
+
+            const infoBox = document.getElementById('smartInfoBox');
+            deviceIssues = { cmp: [], add: [], flt: [] };
+            issueStatuses = {};
+
+            if (deviceId && deviceData[deviceId]) {
+                document.getElementById('display_complaint').innerHTML = formatInteractiveList(deviceData[deviceId].complaint, 'cmp');
+                document.getElementById('display_additional').innerHTML = formatInteractiveList(deviceData[deviceId].additional, 'add');
+                document.getElementById('display_fault').innerHTML = formatInteractiveList(deviceData[deviceId].fault, 'flt');
+                infoBox.classList.remove('hidden');
+            } else {
+                infoBox.classList.add('hidden');
+            }
+        }
 
         function showBillModal(title, message, focusEl = null) {
             document.getElementById('billModalTitle').innerText = title;
@@ -244,12 +351,10 @@
         function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
         function generateRowHtml(prefix, uniqueId, indexCount, typeBadge, cleanName, mode) {
-            // Added 🔗 Merge button alongside ❌ Skip button
             let extraAction = `
                 <button type="button" onclick="showMergeBox('${uniqueId}')" class="text-[10px] bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 px-1.5 py-0.5 rounded font-bold border border-blue-200 transition" title="Merge / Covered by another service">🔗</button>
                 <button type="button" onclick="showSkipReasonBox('${uniqueId}')" class="text-[10px] bg-red-50 hover:bg-red-600 hover:text-white text-red-600 px-1.5 py-0.5 rounded font-bold border border-red-200 transition" title="Skip / Cannot Repair">❌</button>
             `;
-
             return `
             <div id="row_${uniqueId}" class="transition-opacity duration-300">
                 <div class="flex items-center justify-between gap-2 border-b border-gray-100 pb-1.5 mb-1.5 last:border-0 last:pb-0 last:mb-0">
@@ -261,12 +366,10 @@
                         ${extraAction}
                     </div>
                 </div>
-                <!-- Skip Box -->
                 <div id="skip_reason_box_${uniqueId}" class="hidden mb-2 pt-1 border-t border-amber-100 flex items-center gap-2">
                     <input type="text" id="skip_reason_input_${uniqueId}" class="block w-full text-[10px] border-red-300 rounded focus:border-red-500 py-1" placeholder="Reason for skipping...">
                     <button type="button" onclick="confirmSkip('${uniqueId}', '${escapeHtml(cleanName)}')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-[10px] font-bold">Save</button>
                 </div>
-                <!-- Merge Box -->
                 <div id="merge_box_${uniqueId}" class="hidden mb-2 pt-1 border-t border-blue-100 flex items-center gap-2">
                     <input type="text" id="merge_input_${uniqueId}" class="block w-full text-[10px] border-blue-300 rounded focus:border-blue-500 py-1" placeholder="Covered by (ex: Flashing)...">
                     <button type="button" onclick="confirmMerge('${uniqueId}', '${escapeHtml(cleanName)}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[10px] font-bold">Merge</button>
@@ -323,21 +426,6 @@
             return html || `<span class="text-gray-400 italic font-normal">N/A</span>`;
         }
 
-        function showDeviceDetails(deviceId) {
-            const infoBox = document.getElementById('smartInfoBox');
-            deviceIssues = { cmp: [], add: [], flt: [] };
-            issueStatuses = {};
-
-            if (deviceId && deviceData[deviceId]) {
-                document.getElementById('display_complaint').innerHTML = formatInteractiveList(deviceData[deviceId].complaint, 'cmp');
-                document.getElementById('display_additional').innerHTML = formatInteractiveList(deviceData[deviceId].additional, 'add');
-                document.getElementById('display_fault').innerHTML = formatInteractiveList(deviceData[deviceId].fault, 'flt');
-                infoBox.classList.remove('hidden');
-            } else {
-                infoBox.classList.add('hidden');
-            }
-        }
-
         function addAll_cmp() { deviceIssues.cmp.forEach(issue => { if(!issueStatuses[issue.id]) quickAddService(issue.name, issue.type, issue.id); }); }
         function addAll_add() { deviceIssues.add.forEach(issue => { if(!issueStatuses[issue.id]) quickAddService(issue.name, issue.type, issue.id); }); }
         function addAll_flt() { deviceIssues.flt.forEach(issue => { if(!issueStatuses[issue.id]) quickAddService(issue.name, issue.type, issue.id); }); }
@@ -378,7 +466,6 @@
                 if (btnGroup) btnGroup.innerHTML = `<span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-1 rounded font-bold border border-emerald-200">✓ Added</span>`;
                 issueStatuses[uniqueId] = 'added';
 
-                // Hide any open boxes
                 document.getElementById(`skip_reason_box_${uniqueId}`).classList.add('hidden');
                 document.getElementById(`merge_box_${uniqueId}`).classList.add('hidden');
             }
@@ -444,14 +531,58 @@
         let hwIndex = 1;
         document.getElementById('addHardwareBtn').addEventListener('click', function() {
             const container = document.getElementById('hardwareContainer');
-            const rowHTML = `<div class="p-3 mb-3 bg-white border border-gray-200 rounded-md shadow-sm item-row hw-row flex gap-2 items-end"><div style="flex: 55%;"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Service Name *</label><input type="text" name="hardware_items[${hwIndex}][description]" list="hardwareSuggestions" class="hw-desc block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-blue-500 placeholder-gray-400" oninput="syncRowRequirement(this)"><input type="hidden" class="linked-id" value=""></div><div style="flex: 20%;"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Warranty *</label><input type="text" name="hardware_items[${hwIndex}][warranty]" list="warrantySuggestions" class="hw-warranty block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-blue-500 placeholder-gray-400" oninput="syncRowRequirement(this)"></div><div style="flex: 25%;"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount *</label><div class="flex shadow-sm rounded-md"><span class="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-100 text-gray-500 font-bold text-sm">৳</span><input type="number" name="hardware_items[${hwIndex}][amount]" step="0.01" min="0" class="hw-amount item-amount flex-1 block w-full px-3 py-2 rounded-none rounded-r-md text-sm border-gray-300 focus:border-blue-500 font-semibold" oninput="calculateTotal(); syncRowRequirement(this);"></div></div><div style="flex: 0 0 32px; text-align: center; padding-bottom: 4px;"><button type="button" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition cursor-pointer" onclick="removeRow(this)">${trashIcon}</button></div></div>`;
+            const rowHTML = `
+            <div class="p-3 mb-3 bg-white border border-gray-200 rounded-md shadow-sm item-row hw-row flex flex-wrap lg:flex-nowrap gap-2 items-end">
+                <div class="w-full lg:w-auto" style="flex: 1 1 34%;">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Service Name *</label>
+                    <input type="text" name="hardware_items[${hwIndex}][description]" list="hardwareSuggestions" class="hw-desc block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-blue-500 placeholder-gray-400" oninput="syncRowRequirement(this)">
+                    <input type="hidden" class="linked-id" value="">
+                </div>
+                <div class="w-full lg:w-auto" style="flex: 1 1 33%;">
+                    <label class="block text-[10px] font-bold text-indigo-500 uppercase mb-1">Select Part</label>
+                    <select name="hardware_items[${hwIndex}][inventory_id]" class="hw-part block w-full py-2 pl-3 pr-8 border-indigo-200 bg-indigo-50 rounded shadow-sm text-sm focus:border-indigo-500 text-indigo-700 font-semibold truncate" onchange="applyPartPrice(this)">
+                        ${window.currentInventoryOptions}
+                    </select>
+                </div>
+                <div class="w-full lg:w-auto" style="flex: 1 1 15%;">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Warranty *</label>
+                    <input type="text" name="hardware_items[${hwIndex}][warranty]" list="warrantySuggestions" class="hw-warranty block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-blue-500 placeholder-gray-400" oninput="syncRowRequirement(this)">
+                </div>
+                <div class="w-full lg:w-auto" style="flex: 1 1 18%;">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount *</label>
+                    <div class="flex shadow-sm rounded-md">
+                        <span class="inline-flex items-center px-2 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-100 text-gray-500 font-bold text-sm">৳</span>
+                        <input type="number" name="hardware_items[${hwIndex}][amount]" step="0.01" min="0" class="hw-amount item-amount flex-1 block w-full px-2 py-2 rounded-none rounded-r-md text-sm border-gray-300 focus:border-blue-500 font-semibold" oninput="calculateTotal(); syncRowRequirement(this);">
+                    </div>
+                </div>
+                <div class="w-full lg:w-auto flex justify-center lg:justify-end" style="flex: 0 0 32px; padding-bottom: 4px;">
+                    <button type="button" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition cursor-pointer" onclick="removeRow(this)">${trashIcon}</button>
+                </div>
+            </div>`;
             container.insertAdjacentHTML('beforeend', rowHTML); hwIndex++;
         });
 
         let swIndex = 1;
         document.getElementById('addSoftwareBtn').addEventListener('click', function() {
             const container = document.getElementById('softwareContainer');
-            const rowHTML = `<div class="p-3 mb-3 bg-white border border-gray-200 rounded-md shadow-sm item-row sw-row flex gap-2 items-end"><div style="flex: 75%;"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Service Name *</label><input type="text" name="software_items[${swIndex}][description]" list="softwareSuggestions" class="sw-desc block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-green-500 placeholder-gray-400" oninput="syncRowRequirement(this)"><input type="hidden" class="linked-id" value=""></div><div style="flex: 25%;"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount *</label><div class="flex shadow-sm rounded-md"><span class="inline-flex items-center px-3 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-100 text-gray-500 font-bold text-sm">৳</span><input type="number" name="software_items[${swIndex}][amount]" step="0.01" min="0" class="sw-amount item-amount flex-1 block w-full px-3 py-2 rounded-none rounded-r-md text-sm border-gray-300 focus:border-green-500 font-semibold" oninput="calculateTotal(); syncRowRequirement(this);"></div></div><div style="flex: 0 0 32px; text-align: center; padding-bottom: 4px;"><button type="button" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition cursor-pointer" onclick="removeRow(this)">${trashIcon}</button></div></div>`;
+            const rowHTML = `
+            <div class="p-3 mb-3 bg-white border border-gray-200 rounded-md shadow-sm item-row sw-row flex gap-2 items-end">
+                <div style="flex: 1 1 65%;">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Service Name *</label>
+                    <input type="text" name="software_items[${swIndex}][description]" list="softwareSuggestions" class="sw-desc block w-full py-2 px-3 border-gray-300 rounded shadow-sm text-sm focus:border-green-500 placeholder-gray-400" oninput="syncRowRequirement(this)">
+                    <input type="hidden" class="linked-id" value="">
+                </div>
+                <div style="flex: 1 1 35%;">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Amount *</label>
+                    <div class="flex shadow-sm rounded-md">
+                        <span class="inline-flex items-center px-2 py-2 rounded-l-md border border-r-0 border-gray-300 bg-gray-100 text-gray-500 font-bold text-sm">৳</span>
+                        <input type="number" name="software_items[${swIndex}][amount]" step="0.01" min="0" class="sw-amount item-amount flex-1 block w-full px-2 py-2 rounded-none rounded-r-md text-sm border-gray-300 focus:border-green-500 font-semibold" oninput="calculateTotal(); syncRowRequirement(this);">
+                    </div>
+                </div>
+                <div style="flex: 0 0 32px; text-align: center; padding-bottom: 4px;">
+                    <button type="button" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded transition cursor-pointer" onclick="removeRow(this)">${trashIcon}</button>
+                </div>
+            </div>`;
             container.insertAdjacentHTML('beforeend', rowHTML); swIndex++;
         });
 
@@ -501,12 +632,10 @@
         }
         document.getElementById('discount_type').addEventListener('change', calculateTotal);
 
-        // THE MASTER VALIDATOR (On Submit) - Handled Merge Logic Seamlessly!
         document.getElementById('billingForm').addEventListener('submit', function(e) {
             const deviceSelect = document.getElementById('device_id');
             if (!deviceSelect.value) { e.preventDefault(); showBillModal('Select a Device', 'Please select a device.'); return; }
 
-            // Check if ALL issues (cmp, add, flt) are completely handled
             let unresolved = [];
             ['cmp', 'add', 'flt'].forEach(cat => {
                 deviceIssues[cat].forEach(issue => {
@@ -536,7 +665,6 @@
                     if (status && status.startsWith('skipped_')) {
                         additionalTags.push(`[ADDITIONAL_SKIPPED: ${issue.name} | REASON: ${status.split('skipped_')[1]}]`);
                     } else if (status && status.startsWith('merged_')) {
-                        // The magic format: It tricks the receipt page into thinking it's successfully resolved!
                         additionalTags.push(`[ADDITIONAL_RESOLVED: ${issue.name} (Covered by: ${status.split('merged_')[1]})]`);
                     } else if (status === 'added' && cat === 'add') {
                         additionalTags.push(`[ADDITIONAL_RESOLVED: ${issue.name}]`);

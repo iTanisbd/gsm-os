@@ -6,24 +6,7 @@
     </x-slot>
 
     <!-- Auto-Suggestion Datalists (Updated with Modern Tech Terms) -->
-    <datalist id="hwSuggestions">
-        <option value="Display Replacement">
-        <option value="Touch Glass Change">
-        <option value="Battery Replacement">
-        <option value="Charging Port Repair">
-        <option value="Speaker/Mic Fix">
-        <option value="Motherboard Short">
-        <option value="IC Replacement">
-    </datalist>
-    <datalist id="swSuggestions">
-        <option value="FRP Bypass">
-        <option value="Mi Account Unlock">
-        <option value="Stock Firmware Flash">
-        <option value="Dead Boot Repair">
-        <option value="Network Unlock">
-        <option value="Baseband Repair">
-        <option value="Auto Restart Fix">
-    </datalist>
+    @include('partials.suggestions')
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -103,7 +86,7 @@
                                     <!-- HW -->
                                     <div class="flex flex-col bg-blue-50/30 p-3 rounded border border-blue-100 h-full">
                                         <div class="flex items-center gap-2 mb-3">
-                                            <input type="text" id="initial_hw_input" list="hwSuggestions" class="block w-full border-gray-300 focus:border-blue-500 rounded text-xs shadow-sm py-1.5" placeholder="HW Issue...">
+                                            <input type="text" id="initial_hw_input" list="hardwareSuggestions" class="block w-full border-gray-300 focus:border-blue-500 rounded text-xs shadow-sm py-1.5" placeholder="HW Issue...">
                                             <button type="button" onclick="addBadge('initial', 'hw')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded shadow-sm text-xs transition">Add</button>
                                         </div>
                                         <p class="text-[10px] font-bold text-blue-800 uppercase mb-2 border-b border-blue-200 pb-1">Hardware Issues</p>
@@ -112,7 +95,7 @@
                                     <!-- SW -->
                                     <div class="flex flex-col bg-green-50/30 p-3 rounded border border-green-100 h-full">
                                         <div class="flex items-center gap-2 mb-3">
-                                            <input type="text" id="initial_sw_input" list="swSuggestions" class="block w-full border-gray-300 focus:border-green-500 rounded text-xs shadow-sm py-1.5" placeholder="SW Issue...">
+                                            <input type="text" id="initial_sw_input" list="softwareSuggestions" class="block w-full border-gray-300 focus:border-green-500 rounded text-xs shadow-sm py-1.5" placeholder="SW Issue...">
                                             <button type="button" onclick="addBadge('initial', 'sw')" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded shadow-sm text-xs transition">Add</button>
                                         </div>
                                         <p class="text-[10px] font-bold text-green-800 uppercase mb-2 border-b border-green-200 pb-1">Software Issues</p>
@@ -123,13 +106,13 @@
 
                             <!-- Actual Fault (Right) -->
                             <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex flex-col h-full">
-                                <x-input-label class="font-bold text-emerald-600 mb-3 border-b border-gray-100 pb-2" :value="__('2. Actual Fault (টেকনিশিয়ান যা পেলেন)')" />
+                                <x-input-label class="font-bold text-emerald-600 mb-3 border-b border-gray-100 pb-2" :value="__('2. Actual Fault (টেকনিশিয়ান যা পেলেন)')" />
 
                                 <div class="grid grid-cols-2 gap-4 flex-1">
                                     <!-- HW -->
                                     <div class="flex flex-col bg-emerald-50/30 p-3 rounded border border-emerald-100 h-full">
                                         <div class="flex items-center gap-2 mb-3">
-                                            <input type="text" id="fault_hw_input" list="hwSuggestions" class="block w-full border-gray-300 focus:border-emerald-500 rounded text-xs shadow-sm py-1.5" placeholder="+ HW Fault...">
+                                            <input type="text" id="fault_hw_input" list="hardwareSuggestions" class="block w-full border-gray-300 focus:border-emerald-500 rounded text-xs shadow-sm py-1.5" placeholder="+ HW Fault...">
                                             <button type="button" onclick="addBadge('fault', 'hw')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded shadow-sm text-xs transition">Add</button>
                                         </div>
                                         <p class="text-[10px] font-bold text-emerald-800 uppercase mb-2 border-b border-emerald-200 pb-1">Hardware Faults</p>
@@ -138,7 +121,7 @@
                                     <!-- SW -->
                                     <div class="flex flex-col bg-emerald-50/30 p-3 rounded border border-emerald-100 h-full">
                                         <div class="flex items-center gap-2 mb-3">
-                                            <input type="text" id="fault_sw_input" list="swSuggestions" class="block w-full border-gray-300 focus:border-emerald-500 rounded text-xs shadow-sm py-1.5" placeholder="+ SW Fault...">
+                                            <input type="text" id="fault_sw_input" list="softwareSuggestions" class="block w-full border-gray-300 focus:border-emerald-500 rounded text-xs shadow-sm py-1.5" placeholder="+ SW Fault...">
                                             <button type="button" onclick="addBadge('fault', 'sw')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded shadow-sm text-xs transition">Add</button>
                                         </div>
                                         <p class="text-[10px] font-bold text-emerald-800 uppercase mb-2 border-b border-emerald-200 pb-1">Software Faults</p>
@@ -157,7 +140,7 @@
                                 <div class="grid grid-cols-2 gap-4 flex-1">
                                     <div class="flex flex-col bg-indigo-50/30 p-3 rounded border border-indigo-100 h-full">
                                         <div class="flex items-center gap-2 mb-3">
-                                            <input type="text" id="additional_hw_input" list="hwSuggestions" class="block w-full border-gray-300 focus:border-indigo-500 rounded text-xs shadow-sm py-1.5" placeholder="HW Info...">
+                                            <input type="text" id="additional_hw_input" list="hardwareSuggestions" class="block w-full border-gray-300 focus:border-indigo-500 rounded text-xs shadow-sm py-1.5" placeholder="HW Info...">
                                             <button type="button" onclick="addBadge('additional', 'hw')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded shadow-sm text-xs transition">Add</button>
                                         </div>
                                         <p class="text-[10px] font-bold text-indigo-800 uppercase mb-2 border-b border-indigo-200 pb-1">Hardware Additions</p>
@@ -166,7 +149,7 @@
 
                                     <div class="flex flex-col bg-indigo-50/30 p-3 rounded border border-indigo-100 h-full">
                                         <div class="flex items-center gap-2 mb-3">
-                                            <input type="text" id="additional_sw_input" list="swSuggestions" class="block w-full border-gray-300 focus:border-indigo-500 rounded text-xs shadow-sm py-1.5" placeholder="SW Info...">
+                                            <input type="text" id="additional_sw_input" list="softwareSuggestions" class="block w-full border-gray-300 focus:border-indigo-500 rounded text-xs shadow-sm py-1.5" placeholder="SW Info...">
                                             <button type="button" onclick="addBadge('additional', 'sw')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded shadow-sm text-xs transition">Add</button>
                                         </div>
                                         <p class="text-[10px] font-bold text-indigo-800 uppercase mb-2 border-b border-indigo-200 pb-1">Software Additions</p>

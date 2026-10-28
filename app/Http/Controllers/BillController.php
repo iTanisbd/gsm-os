@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bill;
 use App\Models\Device;
 use App\Models\Transaction;
+use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -30,7 +31,13 @@ class BillController extends Controller
             ->latest()
             ->get();
 
-        return view('bills.create', compact('devices'));
+        // Fetch All Available Inventory Parts
+        $inventories = Inventory::where('shop_id', auth()->user()->shop_id)
+            ->where('stock', '>', 0)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('bills.create', compact('devices', 'inventories'));
     }
 
     public function store(Request $request)
@@ -47,7 +54,6 @@ class BillController extends Controller
             'terms' => 'nullable|array',
         ]);
 
-        // ফাঁকা আইটেমগুলো ফিল্টার (বাদ) করা হচ্ছে
         $hardwareItems = array_filter($request->hardware_items ?? [], function($item) {
             return !empty($item['description']) && $item['amount'] !== null;
         });
@@ -56,7 +62,6 @@ class BillController extends Controller
             return !empty($item['description']) && $item['amount'] !== null;
         });
 
-        // হার্ডওয়্যার বা সফটওয়্যার যেকোনো একটি কাজ অন্তত থাকতে হবে
         if (empty($hardwareItems) && empty($softwareItems)) {
             return back()->withInput()->withErrors(['items' => 'You must add at least one hardware or software service!']);
         }
@@ -66,9 +71,7 @@ class BillController extends Controller
         $discountType = $request->discount_type;
         $paid = (float) ($request->paid_amount ?? 0);
 
-        // পার্সেন্টেজ বা ফ্ল্যাট ডিসকাউন্ট ক্যালকুলেশন
         $calculatedDiscount = ($discountType === 'percentage') ? (($total * $discountVal) / 100) : $discountVal;
-
         $netPayable = max(0, $total - $calculatedDiscount);
 
         if ($paid > $netPayable) {
@@ -77,7 +80,6 @@ class BillController extends Controller
 
         $device = Device::with('customer')->findOrFail($request->device_id);
         $due = max(0, $netPayable - $paid);
-
         $paymentStatus = ($paid <= 0) ? 'due' : (($paid < $netPayable) ? 'partial' : 'paid');
 
         $lastBill = Bill::latest()->first();
@@ -86,7 +88,6 @@ class BillController extends Controller
 
         DB::beginTransaction();
         try {
-            // বিল সেভ করা
             $bill = Bill::create([
                 'shop_id' => auth()->user()->shop_id,
                 'customer_id' => $device->customer_id,
@@ -103,17 +104,27 @@ class BillController extends Controller
                 'created_by' => auth()->id(),
             ]);
 
-            // শুধু ফিলাপ করা হার্ডওয়্যার আইটেমগুলো সেভ করা হবে
+            // Save Hardware Items & Deduct Auto-Stock
             foreach ($hardwareItems as $item) {
+                $partLabel = '';
+
+                // Inventory Auto-Deduction Logic
+                if (!empty($item['inventory_id'])) {
+                    $inventoryPart = Inventory::find($item['inventory_id']);
+                    if ($inventoryPart && $inventoryPart->stock > 0) {
+                        $inventoryPart->decrement('stock', 1); // Deduct 1 item from stock
+                    }
+                }
+
                 $bill->items()->create([
                     'category' => 'hardware',
-                    'description' => $item['description'],
+                    'description' => $item['description'], // Will save as you typed or selected
                     'amount' => $item['amount'],
                     'warranty' => $item['warranty'] ?? null,
                 ]);
             }
 
-            // শুধু ফিলাপ করা সফটওয়্যার আইটেমগুলো সেভ করা হবে
+            // Save Software Items
             foreach ($softwareItems as $item) {
                 $bill->items()->create([
                     'category' => 'software',
@@ -136,7 +147,7 @@ class BillController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('bills.index')->with('success', 'Bill generated successfully!');
+            return redirect()->route('bills.index')->with('success', 'Bill generated & Stock adjusted successfully!');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -154,12 +165,7 @@ class BillController extends Controller
     public function print(string $id)
     {
         $bill = Bill::with(['customer', 'device', 'items'])->findOrFail($id);
-
-        // Security check
-        if ($bill->shop_id !== auth()->user()->shop_id) {
-            abort(403);
-        }
-
+        if ($bill->shop_id !== auth()->user()->shop_id) { abort(403); }
         return view('bills.print', compact('bill'));
     }
 
@@ -240,7 +246,6 @@ class BillController extends Controller
         return view('bills.due-list', compact('bills'));
     }
 
-    // Updated adjustBill with Array Support & Dynamic Row Handling
     public function adjustBill(Request $request, string $id)
     {
         $request->validate([
@@ -254,16 +259,13 @@ class BillController extends Controller
         ]);
 
         $bill = Bill::with(['items', 'device'])->findOrFail($id);
-
         if ($bill->shop_id !== auth()->user()->shop_id) { abort(403); }
-
         if ($bill->device && in_array($bill->device->status, ['delivered', 'returned'])) {
             return back()->with('error', 'Security Alert: Cannot adjust bill for a delivered or returned device!');
         }
 
         $keptItems = $request->input('kept_items', []);
 
-        // 1. Toggle [Cancelled] tag for existing items
         foreach ($bill->items as $item) {
             $isKept = in_array($item->id, $keptItems);
             $hasCancelledTag = str_starts_with($item->description, '[Cancelled] ');
@@ -277,7 +279,6 @@ class BillController extends Controller
             }
         }
 
-        // 2. Add ALL New Services (Loops through arrays sent by dynamic rows)
         $newCategories = $request->input('new_service_categories', []);
         $newDescriptions = $request->input('new_service_descriptions', []);
         $newWarranties = $request->input('new_service_warranties', []);
@@ -301,7 +302,6 @@ class BillController extends Controller
             }
         }
 
-        // 3. Recalculate Totals
         $oldAmount = (float) $bill->total_amount;
         $newAmount = (float) $request->new_total_amount;
 
@@ -316,7 +316,6 @@ class BillController extends Controller
             'payment_status' => $paymentStatus,
         ]);
 
-        // 4. Record in Repair Log
         \App\Models\RepairLog::create([
             'device_id' => $bill->device_id,
             'user_id' => auth()->id(),
